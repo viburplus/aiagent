@@ -6,18 +6,6 @@ def get_files_info(working_directory, directory="."):
     full_path = os.path.abspath(os.path.join(working_directory, directory))
     abs_working = os.path.abspath(working_directory)
 
-
-#    print(f"repr: {repr(directory)}")
-#    print(f"getcwd: {os.getcwd()}")
-#    print(f"target: {full_path}")
-#    print(f"working_directory: {working_directory}")
-#    print(f"directory: {directory}")
-#    print(f"path.exists: {os.path.exists(full_path)}")
-#    print(f"path.isdir: {os.path.isdir(full_path)}")
-
-
-
-
     contents = ""
     size = 0
 
