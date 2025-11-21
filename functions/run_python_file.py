@@ -1,5 +1,27 @@
 import os
 import subprocess
+from google.genai import types
+
+schema_run_python_file = types.FunctionDeclaration(
+    name="run_python_file",
+    description="Execute Python files with optional arguments, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The path to the file to be executed, relative to the working directory.",
+            ),
+            "args": types.Schema(
+                type=types.Type.ARRAY,
+                items=types.Schema(
+                    type=types.Type.STRING,
+                ),
+                description="Optional arguments to the executed file",
+            ),
+        },
+    ),
+)
 
 def run_python_file(working_directory, file_path, args=[]):
 
@@ -16,19 +38,22 @@ def run_python_file(working_directory, file_path, args=[]):
         return f'Error: "{file_path}" is not a Python file.'
 
     else:
+
+        output = []
+
         try:
             complProc = subprocess.run(["python", target]+args, text=True, capture_output=True, cwd=abs_work, timeout=30)
 
         except Exception as e:
             return f"Error: executing Python file: {e}"
+        
+        print("DEBUG:", repr(complProc.stdout), repr(complProc.stderr))
 
-        if not complProc.stdout:
-            return "No output produced."
-
-        retVal = f"STDOUT:{complProc.stdout} STDERR:{complProc.stderr}"
-
+        if complProc.stdout:
+            output.append(f"STDOUT:{complProc.stdout}")
+        if complProc.stderr:
+            output.append(f"STDERR:{complProc.stderr}")
         if complProc.returncode != 0:
-            retVal += f" Process exited with code {complProc.returncode}"
+            output.append(f" Process exited with code {complProc.returncode}")
 
-        return retVal
-
+        return " ".join(output) if output else "No output produced"
