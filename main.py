@@ -65,11 +65,6 @@ def main():
             try:
                 response = client.models.generate_content(model='gemini-2.0-flash-001', contents=messages, config=types.GenerateContentConfig(tools=[available_functions], system_instruction=system_prompt),)
 
- #               if available_functions not in response.candidates and (response.text != None or response != ""):
- #                   print("Final response:")
- #                   print(f"{response.text}")
- #                   break
-
                 for candidate in response.candidates:
                     for part in candidate.content.parts:
                         if part.function_call != None:
@@ -108,16 +103,6 @@ def main():
                 
             count += 1
 
-
-'''
-        print(response.text)
-
-
-        if is_verbose:
-            print(f"User prompt: {user_prompt}")
-            print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-            print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
-'''
 
 if __name__ == "__main__":
     main()
