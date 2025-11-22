@@ -40,6 +40,8 @@ available_functions = types.Tool(
 def main():
 
     function_responses = []
+    loop_limit = 20
+    count = 0
 
     if len(sys.argv) == 1:
         print("no prompt found")
@@ -56,22 +58,55 @@ def main():
                 types.Content(role="user", parts=[types.Part(text=user_prompt)]),
         ]
 
-        response = client.models.generate_content(model='gemini-2.0-flash-001', contents=messages, config=types.GenerateContentConfig(tools=[available_functions], system_instruction=system_prompt),)
+        while count <= loop_limit:
 
-        if response.function_calls is not None:
-            for function_call_part in response.function_calls:
-                function_call_result = call_function(function_call_part, verbose)
-                if (
-                    not function_call_result.parts
-                    or not function_call_result.parts[0].function_response
-                ):
-                    raise Exception("empty function call result")
-                if verbose:
-                    print(f"-> {function_call_result.parts[0].function_response.response}")
-                function_responses.append(function_call_result.parts[0])
+            function_call_present = False
+            
+            try:
+                response = client.models.generate_content(model='gemini-2.0-flash-001', contents=messages, config=types.GenerateContentConfig(tools=[available_functions], system_instruction=system_prompt),)
 
-            if not function_responses:
-                raise Exception("no function responses generated, exiting.")
+ #               if available_functions not in response.candidates and (response.text != None or response != ""):
+ #                   print("Final response:")
+ #                   print(f"{response.text}")
+ #                   break
+
+                for candidate in response.candidates:
+                    for part in candidate.content.parts:
+                        if part.function_call != None:
+                            function_call_present = True
+                            break
+
+                if (not function_call_present) and response.text:
+                    print("Final response:")
+                    print(response.text)
+                    break
+
+                for candidate in response.candidates:
+                    messages.append(candidate.content)
+
+                if response.function_calls is not None:
+                    for function_call_part in response.function_calls:
+                        function_call_result = call_function(function_call_part, verbose)
+                        if (
+                            not function_call_result.parts
+                            or not function_call_result.parts[0].function_response
+                        ):
+                            raise Exception("empty function call result")
+                        if verbose:
+                            print(f"-> {function_call_result.parts[0].function_response}")
+                        function_responses.append(function_call_result.parts[0])
+
+                    if not function_responses:
+                        raise Exception("no function responses generated, exiting.")
+                    
+                    messages.append(
+                        types.Content(role="user", parts=function_responses)
+                    )
+                    
+            except Exception as e:
+                print(f"Error: {e}")
+                
+            count += 1
 
 
 '''
